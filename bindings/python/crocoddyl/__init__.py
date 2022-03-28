@@ -410,40 +410,50 @@ def plotOCSolution(xs=None, us=None, figIndex=1, show=True, figTitle=""):
     import numpy as np
     plt.rcParams["pdf.fonttype"] = 42
     plt.rcParams["ps.fonttype"] = 42
+    nrows = 0
 
     # Getting the state and control trajectories
     if xs is not None:
-        xsPlotIdx = 111
+        nrows += 1
         nx = xs[0].shape[0]
         X = [0.] * nx
         for i in range(nx):
             X[i] = [np.asscalar(x[i]) for x in xs]
     if us is not None:
-        usPlotIdx = 111
+        nrows += 1
         nu = us[0].shape[0]
         U = [0.] * nu
         for i in range(nu):
             U[i] = [np.asscalar(u[i]) if u.shape[0] != 0 else 0 for u in us]
-    if xs is not None and us is not None:
-        xsPlotIdx = 211
-        usPlotIdx = 212
-    plt.figure(figIndex)
+    
+    fig, axs = plt.subplots(nrows=nrows, ncols=1, num=figIndex)
+    fig.suptitle(figTitle, fontsize=14)
 
     # Plotting the state trajectories
     if xs is not None:
-        plt.subplot(xsPlotIdx)
-        [plt.plot(X[i], label="x" + str(i)) for i in range(nx)]
-        plt.legend()
-        plt.title(figTitle, fontsize=14)
+        if us is not None:
+            ax = axs[0]
+        else:
+            ax = axs
+        [ax.plot(X[i], label="x" + str(i)) for i in range(nx)]
+        ax.legend()
+        ax.grid()
 
     # Plotting the control commands
     if us is not None:
-        plt.subplot(usPlotIdx)
-        [plt.plot(U[i], label="u" + str(i)) for i in range(nu)]
-        plt.legend()
-        plt.xlabel("knots")
+        if xs is not None:
+            ax = axs[1]
+        else:
+            ax = axs
+        [ax.plot(U[i], label="u" + str(i)) for i in range(nu)]
+        ax.set_xlabel("knots")
+        ax.legend()
+        ax.grid()
+
     if show:
         plt.show()
+
+    return fig, axs
 
 
 def plotConvergence(costs, muLM, muV, gamma, theta, alpha, figIndex=1, show=True, figTitle=""):
@@ -453,35 +463,39 @@ def plotConvergence(costs, muLM, muV, gamma, theta, alpha, figIndex=1, show=True
     plt.rcParams["ps.fonttype"] = 42
     plt.figure(figIndex, figsize=(6.4, 8))
 
+    fig, axs = plt.subplots(5, 1, num=figIndex)
+    fig.suptitle(figTitle, fontsize=14)
+
     # Plotting the total cost sequence
-    plt.subplot(511)
-    plt.ylabel("cost")
-    plt.plot(costs)
-    plt.title(figTitle, fontsize=14)
+    axs[0].set_ylabel("cost")
+    axs[0].plot(costs)
 
     # Ploting mu sequences
-    plt.subplot(512)
-    plt.ylabel("mu")
-    plt.plot(muLM, label="LM")
-    plt.plot(muV, label="V")
-    plt.legend()
+    axs[1].set_ylabel("mu")
+    axs[1].plot(muLM, label="LM")
+    axs[1].plot(muV, label="V")
+    axs[1].legend()
 
     # Plotting the gradient sequence (gamma and theta)
-    plt.subplot(513)
-    plt.ylabel("gamma")
-    plt.plot(gamma)
-    plt.subplot(514)
-    plt.ylabel("theta")
-    plt.plot(theta)
+    axs[2].set_ylabel("gamma")
+    axs[2].plot(gamma)
+
+    axs[3].set_ylabel("theta")
+    axs[3].plot(theta)
 
     # Plotting the alpha sequence
-    plt.subplot(515)
-    plt.ylabel("alpha")
+    axs[4].set_ylabel("alpha")
     ind = np.arange(len(alpha))
-    plt.bar(ind, alpha)
-    plt.xlabel("iteration")
+    axs[4].bar(ind, alpha)
+    axs[4].set_xlabel("iteration")
+
+    for ax in axs.flat:
+        ax.grid()
+
     if show:
         plt.show()
+
+    return fig, axs
 
 
 def saveOCSolution(filename, xs, us, ks=None, Ks=None):
